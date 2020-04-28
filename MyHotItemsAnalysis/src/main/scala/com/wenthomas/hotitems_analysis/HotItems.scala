@@ -65,6 +65,7 @@ object HotItems {
                 //开启滑动窗口
                 .timeWindow(Time.minutes(60), Time.minutes(15))
                 //定义滑动窗口
+                //注意：aggregate算子不能传入RichFunction
                 .aggregate(new CountAgg(), new ItemCountWindowResult())
 
         //todo:对窗口聚合结果按照窗口尽心个分组，并做排序取出TopN输出
@@ -97,11 +98,17 @@ class CountAgg() extends AggregateFunction[UserBehavior, Long, Long] {
 
     override def getResult(accumulator: Long): Long = accumulator
 
+    /**
+     * 一般在会话窗口才会用到
+     * @param a
+     * @param b
+     * @return
+     */
     override def merge(a: Long, b: Long): Long = a + b
 }
 
 /**
- * 自定义窗口函数，结合window信息包装成样例类
+ * 自定义全窗口函数，结合window信息包装成样例类
  */
 class ItemCountWindowResult() extends WindowFunction[Long, ItemViewCount, Tuple, TimeWindow] {
     override def apply(key: Tuple, window: TimeWindow, input: Iterable[Long], out: Collector[ItemViewCount]): Unit = {
